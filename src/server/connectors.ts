@@ -176,7 +176,17 @@ async function queryDuckDuckGo(queries: string[], attempts: SourceAttempt[]): Pr
 
 function queryLinkedIn(queries: string[], attempts: SourceAttempt[]): ConnectorFinding {
   const query = queries[0] || '';
-  if (query.startsWith('http') && query.includes('linkedin.com')) {
+  let isLinkedInHost = false;
+  if (query.startsWith('http')) {
+    try {
+      const parsed = new URL(query);
+      isLinkedInHost = parsed.hostname === 'linkedin.com' || parsed.hostname.endsWith('.linkedin.com');
+    } catch {
+      isLinkedInHost = false;
+    }
+  }
+
+  if (isLinkedInHost) {
     pushAttempt(attempts, 'linkedin', query, 'verified_match', 'Provided LinkedIn URL accepted as claimed source');
     return makeFinding('linkedin', {
       status: 'verified_match',

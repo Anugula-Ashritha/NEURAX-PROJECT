@@ -23,6 +23,38 @@ interface StoredUser {
 }
 
 const users: StoredUser[] = [];
+const authRateLimit = new Map<string, { count: number; windowStart: number }>();
+
+function hashPassword(password: string) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derived = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${derived}`;
+}
+
+function verifyPassword(password: string, storedHash: string) {
+  const [salt, originalHash] = storedHash.split(':');
+  if (!salt || !originalHash) return false;
+  const incomingHash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(originalHash, 'hex'), Buffer.from(incomingHash, 'hex'));
+}
+
+function isRateLimited(ipAddress: string, limit = 10, windowMs = 10 * 60 * 1000) {
+  const now = Date.now();
+  const current = authRateLimit.get(ipAddress);
+
+  if (!current || now - current.windowStart > windowMs) {
+    authRateLimit.set(ipAddress, { count: 1, windowStart: now });
+    return false;
+  }
+
+  if (current.count >= limit) {
+    return true;
+  }
+
+  current.count += 1;
+  authRateLimit.set(ipAddress, current);
+  return false;
+}
 
 app.post('/api/auth/signup', (req, res) => {
   try {
@@ -40,7 +72,7 @@ app.post('/api/auth/signup', (req, res) => {
       id: `usr_${crypto.randomUUID().slice(0, 8)}`,
       name: String(name).trim(),
       email: cleanEmail,
-      passwordHash: crypto.createHash('sha256').update(String(password)).digest('hex'),
+      passwordHash: hashPassword(String(password)),
       role: role || 'OSINT Investigator',
       organization: organization ? String(organization).trim() : 'Independent Intelligence Team',
       clearanceLevel: role === 'Neurax Hackathon Judge' ? 'LEVEL_3_DIRECTOR' : 'LEVEL_2_TACTICAL',
@@ -68,6 +100,11 @@ app.post('/api/auth/signup', (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
   try {
+    const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+    if (isRateLimited(ipAddress)) {
+      return res.status(429).json({ error: 'Too many login attempts. Please retry later.' });
+    }
+
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -80,8 +117,7 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(401).json({ error: 'Invalid investigator email or password.' });
     }
 
-    const incomingHash = crypto.createHash('sha256').update(String(password)).digest('hex');
-    if (incomingHash !== user.passwordHash) {
+    if (!verifyPassword(String(password), user.passwordHash)) {
       return res.status(401).json({ error: 'Invalid investigator email or password.' });
     }
 
