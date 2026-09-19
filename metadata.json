@@ -1,0 +1,6 @@
+{
+  "name": "Public Profile & Digital Footprint Intelligence",
+  "description": "Discover, correlate and verify publicly available digital identities across social, professional and technical platforms with an evidence-backed intelligence graph.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
