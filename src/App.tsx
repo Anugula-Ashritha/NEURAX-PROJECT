@@ -37,7 +37,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
 
-  // Load session and history from localStorage on startup, or default to an active investigator session
+  // Load session and history from localStorage on startup
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('aporiatrace_auth_user');
@@ -45,18 +45,8 @@ export default function App() {
         const parsed = JSON.parse(savedUser);
         setCurrentUser(parsed);
       } else {
-        // Default authorized investigator session for instant evaluation
-        const defaultUser: UserProfile = {
-          id: 'usr_sec_lead',
-          name: 'Lead OSINT Officer',
-          email: 'investigator@cybersec-core.org',
-          role: 'Cybersecurity Analyst',
-          organization: 'Threat Intelligence Unit',
-          clearanceLevel: 'LEVEL_2_TACTICAL',
-          token: 'tk_live_session',
-        };
-        setCurrentUser(defaultUser);
-        localStorage.setItem('aporiatrace_auth_user', JSON.stringify(defaultUser));
+        setCurrentUser(null);
+        setActiveTab('auth');
       }
 
       const savedHistory = localStorage.getItem('aporiatrace_verification_history');

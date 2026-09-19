@@ -1,3 +1,5 @@
+export type SourceStatus = 'verified_match' | 'candidate_match' | 'no_result' | 'source_unavailable';
+
 export interface CandidateInput {
   fullName: string;
   email: string;
@@ -6,6 +8,9 @@ export interface CandidateInput {
   githubUsername?: string;
   linkedinUrl?: string;
   notes?: string;
+  limitedContext?: string;
+  knownAliases?: string;
+  organizerConsentAcknowledged?: boolean;
 }
 
 export interface GitHubRepo {
@@ -35,6 +40,7 @@ export interface GitHubProfile {
   updated_at?: string;
   topLanguages?: string[];
   recentRepos?: GitHubRepo[];
+  status?: SourceStatus;
 }
 
 export interface GravatarProfile {
@@ -42,6 +48,14 @@ export interface GravatarProfile {
   avatarUrl?: string;
   profileUrl?: string;
   hash: string;
+}
+
+export interface ExternalProfile {
+  searchUrl: string;
+  inferredHandle?: string;
+  inferredUrl?: string;
+  status?: SourceStatus | string;
+  headline?: string;
 }
 
 export interface EmailSecurityCheck {
@@ -57,7 +71,7 @@ export interface EmailSecurityCheck {
 export interface PhotoVerification {
   uploaded: boolean;
   matchedPublicAvatar: boolean;
-  confidence: number; // 0 - 100
+  confidence: number;
   analysisNotes: string;
 }
 
@@ -65,7 +79,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  role: 'OSINT Investigator' | 'Cybersecurity Analyst' | 'Senior Intelligence Director' | 'Identity Screening Officer';
+  role: 'OSINT Investigator' | 'Cybersecurity Analyst' | 'Senior Intelligence Director' | 'Identity Screening Officer' | 'Neurax Hackathon Judge';
   organization: string;
   clearanceLevel: 'LEVEL_1_BASIC' | 'LEVEL_2_TACTICAL' | 'LEVEL_3_DIRECTOR';
   token: string;
@@ -101,7 +115,7 @@ export interface VerificationResult {
     company?: string;
     title?: string;
   };
-  overallTrustScore: number; // 0 - 100
+  overallTrustScore: number;
   trustLevel: 'VERIFIED' | 'MODERATE_CONFIDENCE' | 'UNVERIFIED_RISK' | 'INSUFFICIENT_SIGNALS';
   executiveSummary: string;
   currentActivity: {
@@ -113,62 +127,18 @@ export interface VerificationResult {
   socialProfiles: {
     github: GitHubProfile;
     gravatar: GravatarProfile;
-    linkedin: {
-      inferredUrl?: string;
-      searchUrl: string;
-      status: 'VERIFIED_LINK' | 'SEARCH_INDEXED' | 'MANUAL_REQUIRED';
-      headline?: string;
-    };
-    twitterX?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    instagram?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    youtube?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    reddit?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    devpost?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    kaggle?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    medium?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    discord?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    scholar?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
-    gitlab?: {
-      searchUrl: string;
-      inferredHandle?: string;
-      status?: string;
-    };
+    linkedin: ExternalProfile;
+    twitterX?: ExternalProfile;
+    instagram?: ExternalProfile;
+    youtube?: ExternalProfile;
+    reddit?: ExternalProfile;
+    devpost?: ExternalProfile;
+    kaggle?: ExternalProfile;
+    medium?: ExternalProfile;
+    discord?: ExternalProfile;
+    scholar?: ExternalProfile;
+    gitlab?: ExternalProfile;
+    [key: string]: any;
   };
   emailSecurity: EmailSecurityCheck;
   photoVerification: PhotoVerification;
@@ -266,5 +236,18 @@ export interface VerificationResult {
     legalAuditId: string;
     verifiedTimestamp: string;
   };
+  sourceDiscovery?: {
+    plan: Record<string, string[]>;
+    attempts: Array<{ source: string; query: string; status: SourceStatus; detail: string }>;
+    findings: Record<string, { status: SourceStatus; profileUrl?: string; extractorNotes?: string }>;
+    unresolvedCandidates: Array<{ source: string; query: string; reason: string }>;
+  };
+  evidenceMatrix?: Array<{
+    claim: string;
+    confidence: number;
+    supportingSources: string[];
+    conflict: boolean;
+    uncertainty: boolean;
+  }>;
   verificationTimestamp: string;
 }
