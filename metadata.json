@@ -1,0 +1,6 @@
+{
+  "name": "Candidate Identity & Public Profile Verifier",
+  "description": "Cybersecurity and interview screening tool to discover, verify, and correlate real public candidate identities across GitHub, social profiles, email security, and portfolio projects with photo analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
